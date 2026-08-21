@@ -2,7 +2,7 @@
 name: karimo-pm
 description: Coordinates autonomous task execution — manages git workflows, spawns worker agents, monitors progress, creates PRs. Never writes code. Use when /karimo:run starts execution.
 model: sonnet
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob, Task
 ---
 
 # KARIMO PM Agent (Team Coordinator)

@@ -2,7 +2,7 @@
 name: karimo-pm-reviewer
 description: Review coordination agent — validates task PRs, manages revision loops, handles model escalation. Spawned by PM Agent per task PR. Never writes code.
 model: sonnet
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob, Task
 ---
 
 # KARIMO PM-Reviewer Agent (Review Coordinator)
