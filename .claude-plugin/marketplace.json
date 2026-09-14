@@ -1,24 +1,24 @@
 {
-  "name": "karimo",
+  "name": "karimo-vk",
   "owner": {
     "name": "Open Session",
     "email": "hello@opensesh.com",
-    "url": "https://github.com/opensesh"
+    "url": "https://github.com/Arunvk123"
   },
   "metadata": {
     "description": "Autonomous development methodology: PRD interviews → agent execution → automated review",
-    "version": "9.10.1"
+    "version": "9.11.0"
   },
   "plugins": [
     {
       "name": "karimo",
       "source": "./.claude/plugins/karimo",
       "description": "Autonomous development methodology for Claude Code",
-      "version": "9.10.1",
+      "version": "9.11.0",
       "category": "development-workflows",
       "author": {
         "name": "Open Session",
-        "url": "https://github.com/opensesh/KARIMO"
+        "url": "https://github.com/Arunvk123/KARIMO"
       }
     }
   ]

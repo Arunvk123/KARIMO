@@ -1,6 +1,6 @@
 #!/bin/bash
 # remote-install.sh — Curl-friendly installer wrapper
-# Usage: curl -sL https://raw.githubusercontent.com/opensesh/KARIMO/main/.karimo/remote-install.sh | bash -s /path/to/project
+# Usage: curl -sL https://raw.githubusercontent.com/Arunvk123/KARIMO/main/.karimo/remote-install.sh | bash -s /path/to/project
 
 set -e
 
@@ -27,7 +27,7 @@ trap "rm -rf $TMPDIR" EXIT
 
 # Clone KARIMO (shallow for speed)
 echo "Downloading KARIMO..."
-git clone --depth 1 --quiet https://github.com/opensesh/KARIMO.git "$TMPDIR/KARIMO"
+git clone --depth 1 --quiet https://github.com/Arunvk123/KARIMO.git "$TMPDIR/KARIMO"
 
 # Run the actual installer
 echo ""

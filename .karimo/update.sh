@@ -41,7 +41,7 @@ DIM='\033[2m'
 NC='\033[0m' # No Color
 
 # GitHub repository for releases
-GITHUB_REPO="opensesh/KARIMO"
+GITHUB_REPO="Arunvk123/KARIMO"
 GITHUB_API="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 
 # ==============================================================================

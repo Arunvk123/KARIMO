@@ -34,7 +34,7 @@ Automated code review catches issues before human review and enables revision lo
 ### Option A: One-liner (fastest)
 
 ```bash
-curl -sL https://raw.githubusercontent.com/opensesh/KARIMO/main/.karimo/remote-install.sh | bash -s /path/to/your/project
+curl -sL https://raw.githubusercontent.com/Arunvk123/KARIMO/main/.karimo/remote-install.sh | bash -s /path/to/your/project
 ```
 
 This downloads KARIMO to a temp directory, runs the installer, and cleans up automatically.
@@ -42,7 +42,7 @@ This downloads KARIMO to a temp directory, runs the installer, and cleans up aut
 ### Option B: Clone first (inspect before running)
 
 ```bash
-git clone https://github.com/opensesh/KARIMO.git
+git clone https://github.com/Arunvk123/KARIMO.git
 bash KARIMO/.karimo/install.sh /path/to/your/project
 ```
 
