@@ -100,21 +100,21 @@ Details: [PHASES.md](.karimo/docs/PHASES.md)
 
 ### Via Claude Code marketplace (recommended)
 
-This fork is published under its own marketplace name (`karimo-arunvk`) so it can be
+This fork is published under its own marketplace name (`karimo-vk`) so it can be
 added alongside the upstream `opensesh/KARIMO` marketplace without conflicting with it.
 The plugin name stays `karimo`, so all `/karimo:*` commands are unchanged.
 
 ```
 /plugin marketplace add Arunvk123/KARIMO
-/plugin install karimo@karimo-arunvk
+/plugin install karimo@karimo-vk
 /reload-plugins
 ```
 
 To update later:
 
 ```
-/plugin marketplace update karimo-arunvk
-/plugin update karimo@karimo-arunvk
+/plugin marketplace update karimo-vk
+/plugin update karimo@karimo-vk
 /reload-plugins
 ```
 

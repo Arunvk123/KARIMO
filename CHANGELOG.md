@@ -16,10 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Fork distribution** — This fork is now distributed under its own marketplace name so it can coexist with upstream `opensesh/KARIMO`:
-  - `.claude-plugin/marketplace.json` — marketplace `name` is `karimo-arunvk` (plugin name remains `karimo`; `/karimo:*` commands unchanged)
+  - `.claude-plugin/marketplace.json` — marketplace `name` is `karimo-vk` (plugin name remains `karimo`; `/karimo:*` commands unchanged)
   - `plugin.json` / `marketplace.json` — repository URLs point to `Arunvk123/KARIMO`
   - `.karimo/scripts/release.sh`, `.karimo/update.sh` — `GITHUB_REPO` points to `Arunvk123/KARIMO` so `/karimo:update` and release verification target this fork
-  - README install instructions updated to `/plugin install karimo@karimo-arunvk`
+  - README install instructions updated to `/plugin install karimo@karimo-vk`
 
 ---
 
