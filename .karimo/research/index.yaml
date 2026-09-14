@@ -33,4 +33,12 @@
 #   - If missing, karimo-research will initialize it with empty array
 #   - Manual editing is safe (YAML format)
 
-research: []
+research:
+  - id: "001"
+    topic: "Review Providers Integration (Greptile & Claude Code Review)"
+    filename: "review-providers-integration-001.md"
+    created: "2026-09-15T00:00:00Z"
+    tags: ["review-providers", "greptile", "code-review", "pm-reviewer", "github"]
+    summary: "Providers are triggered by GitHub labels/app events (never commits or PR text); PM-Reviewer polls, parses via provider scripts, classifies findings and runs revision loops; providers only comment while KARIMO owns PR state via labels. Lists gaps to address before adding a custom reviewer."
+    status: "draft"
+    rounds: 0
