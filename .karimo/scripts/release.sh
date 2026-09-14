@@ -39,6 +39,15 @@ GITHUB_REPO="Arunvk123/KARIMO"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# Portable in-place sed (GNU sed on Linux/Git Bash, BSD sed on macOS)
+sed_inplace() {
+    if sed --version >/dev/null 2>&1; then
+        sed -i "$@"
+    else
+        sed -i '' "$@"
+    fi
+}
+
 # ==============================================================================
 # ARGUMENT PARSING
 # ==============================================================================
@@ -201,16 +210,16 @@ else
     echo -e "${GREEN}✓${NC} Updated .karimo/VERSION"
 
     # Update MANIFEST.json
-    sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" "$PROJECT_ROOT/.karimo/MANIFEST.json"
+    sed_inplace "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" "$PROJECT_ROOT/.karimo/MANIFEST.json"
     echo -e "${GREEN}✓${NC} Updated .karimo/MANIFEST.json"
 
     # Update plugin.json
-    sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" \
+    sed_inplace "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" \
         "$PROJECT_ROOT/.claude/plugins/karimo/.claude-plugin/plugin.json"
     echo -e "${GREEN}✓${NC} Updated plugin.json"
 
     # Update marketplace.json (both occurrences)
-    sed -i '' "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/g" \
+    sed_inplace "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/g" \
         "$PROJECT_ROOT/.claude-plugin/marketplace.json"
     echo -e "${GREEN}✓${NC} Updated marketplace.json"
 fi
@@ -234,13 +243,17 @@ else
         git add "$PROJECT_ROOT/CHANGELOG.md"
     fi
 
-    git commit -m "$(cat <<EOF
+    if git diff --cached --quiet; then
+        echo -e "${GREEN}✓${NC} Version files already at $VERSION — nothing to commit"
+    else
+        git commit -m "$(cat <<EOF
 chore(release): bump version to $VERSION
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
-    echo -e "${GREEN}✓${NC} Committed version bump"
+        echo -e "${GREEN}✓${NC} Committed version bump"
+    fi
 fi
 
 # ==============================================================================
