@@ -8,7 +8,7 @@
 ```
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-v9.9.1-blue)]()
+[![Version](https://img.shields.io/badge/version-v9.11.0-blue)]()
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blueviolet.svg)]()
 
 **PRD-driven autonomous agent orchestration harness plug-in for Claude Code.**
@@ -100,22 +100,31 @@ Details: [PHASES.md](.karimo/docs/PHASES.md)
 
 ### Via Claude Code marketplace (recommended)
 
+This fork is published under its own marketplace name (`karimo-arunvk`) so it can be
+added alongside the upstream `opensesh/KARIMO` marketplace without conflicting with it.
+The plugin name stays `karimo`, so all `/karimo:*` commands are unchanged.
+
 ```
-/plugin marketplace add opensesh/KARIMO
-/plugin install karimo@karimo
+/plugin marketplace add Arunvk123/KARIMO
+/plugin install karimo@karimo-arunvk
 /reload-plugins
 ```
 
-Once Anthropic accepts KARIMO into the official marketplace (in review), this becomes:
+To update later:
 
 ```
-/plugin install karimo@claude-plugins-official
+/plugin marketplace update karimo-arunvk
+/plugin update karimo@karimo-arunvk
+/reload-plugins
 ```
+
+> Note: only one plugin named `karimo` can be enabled at a time. If you already have the
+> upstream `karimo@karimo` installed, uninstall it first (`/plugin uninstall karimo@karimo`).
 
 ### Via install script (legacy)
 
 ```bash
-git clone https://github.com/opensesh/KARIMO
+git clone https://github.com/Arunvk123/KARIMO
 bash KARIMO/.karimo/install.sh ./my-project
 ```
 

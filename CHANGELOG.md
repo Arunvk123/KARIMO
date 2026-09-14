@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.11.0] - 2026-09-14
+
+### Added
+
+- **Subagent spawning for coordination agents** — `karimo-pm` and `karimo-pm-reviewer` now include `Task` in their `tools` list, allowing them to spawn worker and revision subagents directly (previously documented but not permitted by the agent frontmatter).
+
+### Changed
+
+- **Fork distribution** — This fork is now distributed under its own marketplace name so it can coexist with upstream `opensesh/KARIMO`:
+  - `.claude-plugin/marketplace.json` — marketplace `name` is `karimo-arunvk` (plugin name remains `karimo`; `/karimo:*` commands unchanged)
+  - `plugin.json` / `marketplace.json` — repository URLs point to `Arunvk123/KARIMO`
+  - `.karimo/scripts/release.sh`, `.karimo/update.sh` — `GITHUB_REPO` points to `Arunvk123/KARIMO` so `/karimo:update` and release verification target this fork
+  - README install instructions updated to `/plugin install karimo@karimo-arunvk`
+
+---
+
 ## [9.10.1] - 2026-05-09
 
 ### Fixed

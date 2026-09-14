@@ -35,7 +35,7 @@ bash .karimo/update.sh --force
 The script will:
 
 1. **Check current version** from `.karimo/VERSION`
-2. **Fetch latest release** from GitHub (opensesh/KARIMO)
+2. **Fetch latest release** from GitHub (Arunvk123/KARIMO)
 3. **Compare versions** using semver
 4. **Show what will be updated** (if update available)
 5. **Apply updates** after user confirmation
@@ -136,7 +136,7 @@ Config migrated: vA.B → vX.Y (if applicable)
 
 Recommended next steps:
   1. Run /karimo:doctor to verify the updated installation
-  2. Review changelog at https://github.com/opensesh/KARIMO/releases
+  2. Review changelog at https://github.com/Arunvk123/KARIMO/releases
   3. Check migration backups: ls .karimo/config.yaml.backup-*
   4. Commit: git add -A && git commit -m "chore: update KARIMO to X.Y.Z"
 ```
@@ -175,7 +175,7 @@ These files are **never modified** by updates:
 
 If GitHub is unreachable, the script provides manual instructions:
 
-1. Download latest release from https://github.com/opensesh/KARIMO/releases
+1. Download latest release from https://github.com/Arunvk123/KARIMO/releases
 2. Extract the release
 3. Run: `.karimo/update.sh --local <extracted-karimo> .`
 
