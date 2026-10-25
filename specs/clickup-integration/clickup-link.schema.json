@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "karimo/clickup-link.schema.json",
+  "title": "KARIMO PRD ↔ ClickUp mapping (.karimo/prds/{slug}/clickup.json)",
+  "description": "Authoritative mapping between a KARIMO PRD and its ClickUp objects. Committed to git. See SPEC.md §7.2.",
+  "type": "object",
+  "required": ["version", "prd_slug", "space_id", "folder_id", "list_id", "prd_task_id", "tasks"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "prd_slug": { "type": "string" },
+    "origin": {
+      "description": "How the PRD started: from /karimo:research, or from a human-created ClickUp task (intake).",
+      "enum": ["research", "intake-small", "intake-large"]
+    },
+    "space_id": { "type": "string" },
+    "folder_id": { "type": "string" },
+    "list_id": { "type": "string" },
+    "prd_task_id": { "type": "string", "description": "PRD control task id" },
+    "owner_user_id": {
+      "type": ["integer", "null"],
+      "description": "ClickUp user mentioned on PRD-level and KARIMO-generated task questions"
+    },
+    "tasks": {
+      "type": "object",
+      "description": "Keyed by KARIMO task id (e.g. \"2a\")",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["clickup_task_id"],
+        "additionalProperties": false,
+        "properties": {
+          "clickup_task_id": { "type": "string" },
+          "creator_user_id": {
+            "type": ["integer", "null"],
+            "description": "Set when the ClickUp task was human-created (intake); used for mentions"
+          },
+          "last_synced_status": { "type": "string" },
+          "last_synced_at": { "type": "string", "format": "date-time" },
+          "pr_url": { "type": "string" }
+        }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "synced_at": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "prd_slug": "user-profiles",
+      "origin": "research",
+      "space_id": "90120000001",
+      "folder_id": "90120000123",
+      "list_id": "901200004567",
+      "prd_task_id": "86c0abc01",
+      "owner_user_id": 4512345,
+      "tasks": {
+        "1a": {
+          "clickup_task_id": "86c0abc02",
+          "creator_user_id": null,
+          "last_synced_status": "complete",
+          "last_synced_at": "2026-10-26T10:42:00Z",
+          "pr_url": "https://github.com/acme/web/pull/41"
+        },
+        "2a": {
+          "clickup_task_id": "86c0abc03",
+          "creator_user_id": null,
+          "last_synced_status": "awaiting input",
+          "last_synced_at": "2026-10-26T11:05:00Z"
+        }
+      },
+      "created_at": "2026-10-26T09:00:00Z",
+      "synced_at": "2026-10-26T11:05:00Z"
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "karimo/clarifications.schema.json",
+  "title": "KARIMO clarifications (.karimo/prds/{slug}/clarifications.json)",
+  "description": "Questions KARIMO needs humans to answer, and their answers. Committed to git. See SPEC.md §6.3 and §7.3.",
+  "type": "object",
+  "required": ["version", "items"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "scope", "question", "blocking", "status", "asked_at", "asked_by", "mode_at_ask"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^Q-(prd|[0-9]+[a-z]?)-[0-9]{3}$",
+            "description": "Q-{task_id|prd}-{seq}, e.g. Q-2a-001. Also the q:{id} marker in the ClickUp comment."
+          },
+          "scope": { "enum": ["task", "prd"] },
+          "task_id": { "type": ["string", "null"], "description": "KARIMO task id when scope = task" },
+          "stage": {
+            "enum": ["research", "plan", "run", "gate", "review", "merge", "intake"],
+            "description": "Where in the lifecycle the question arose"
+          },
+          "blocking": {
+            "enum": ["task", "wave", "prd"],
+            "description": "What pauses until it is answered; independent work continues"
+          },
+          "question": { "type": "string" },
+          "context": { "type": "string" },
+          "options": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Optional numbered choices; a reply that is just a number selects one"
+          },
+          "asked_by": { "type": "string", "description": "Agent or command, e.g. karimo-pm" },
+          "asked_at": { "type": "string", "format": "date-time" },
+          "mode_at_ask": { "enum": ["companion", "remote", "direct"] },
+          "mention_user_id": { "type": ["integer", "null"] },
+          "clickup": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": {
+              "task_id": { "type": "string" },
+              "comment_id": { "type": "string" }
+            }
+          },
+          "status": {
+            "enum": ["open", "answered", "applied", "cancelled"],
+            "description": "open → answered (answer recorded) → applied (answer used when work resumed)"
+          },
+          "answer": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "required": ["text", "source", "answered_at"],
+            "properties": {
+              "text": { "type": "string" },
+              "selected_option": { "type": ["integer", "null"] },
+              "source": { "enum": ["terminal", "clickup"] },
+              "author_user_id": { "type": ["integer", "null"] },
+              "answered_at": { "type": "string", "format": "date-time" },
+              "comment_ids": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "applied_at": { "type": ["string", "null"], "format": "date-time" }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "items": [
+        {
+          "id": "Q-2a-001",
+          "scope": "task",
+          "task_id": "2a",
+          "stage": "run",
+          "blocking": "task",
+          "question": "Which service should the avatar URL come from?",
+          "context": "The brief says 'the user service', but two exist: src/services/users.ts and src/api/legacy/users.ts.",
+          "options": ["src/services/users.ts (newer, typed)", "src/api/legacy/users.ts (used by the existing header)"],
+          "asked_by": "karimo-pm",
+          "asked_at": "2026-10-26T11:05:00Z",
+          "mode_at_ask": "remote",
+          "mention_user_id": 4512345,
+          "clickup": { "task_id": "86c0abc03", "comment_id": "90120055501" },
+          "status": "answered",
+          "answer": {
+            "text": "1",
+            "selected_option": 1,
+            "source": "clickup",
+            "author_user_id": 4512345,
+            "answered_at": "2026-10-26T11:31:00Z",
+            "comment_ids": ["90120055622"]
+          },
+          "applied_at": null
+        }
+      ]
+    }
+  ]
+}

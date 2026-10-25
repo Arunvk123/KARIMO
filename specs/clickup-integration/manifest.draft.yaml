@@ -1,0 +1,64 @@
+# DRAFT — ClickUp Tracker Provider Manifest
+# Target location: .karimo/providers/clickup/manifest.yaml
+# Spec: specs/clickup-integration/SPEC.md (§11.1)
+#
+# Unlike greptile / code-review (type: review), this is a tracker provider.
+# PROVIDER_MANIFEST_SCHEMA.md gains a `type` field (review | tracker) and the
+# tracker hook names below; review providers default to type: review.
+
+name: clickup
+type: tracker
+version: 1.0.0
+description: ClickUp project tracking and human communication (REST API v2)
+pricing_model: external          # ClickUp plan + one member seat for the KARIMO user
+
+capabilities:
+  prd_containers: true           # Folder + list + PRD control task per PRD
+  task_mirroring: true           # One ClickUp task per KARIMO task
+  status_sync: true
+  dependencies: true             # depends_on → "waiting on"
+  clarifications: true           # Ask protocol via comments + Awaiting Input
+  intake: true                   # Human-created tasks assigned to KARIMO
+  pr_linking: true               # [CU-{id}] in PR titles
+
+# Entry point; every hook calls it with a subcommand
+entrypoint: scripts/clickup.sh
+
+hooks:
+  on_prd_created: "prd init {slug}"
+  on_prd_finalized: "prd sync {slug}"
+  on_tasks_generated: "tasks sync {slug}"
+  on_status_change: "status {slug} {task_id} {karimo_state}"
+  on_pr_create: "comment {slug} {task_id} --file {pr_comment_file}"
+  on_review_complete: "comment {slug} {task_id} --file {review_summary_file}"
+  on_clarification: "ask {slug} {target} --file {question_file}"
+  on_prd_merged: "status {slug} prd merged"
+
+requirements:
+  binaries: [curl, jq]
+  env: [CLICKUP_API_TOKEN]
+
+config_schema:
+  space_id:
+    type: string
+    required: true
+  karimo_user_id:
+    type: string
+    required: true
+  token_env:
+    type: string
+    default: CLICKUP_API_TOKEN
+  statuses:
+    type: object
+    required: true
+    description: KARIMO state → ClickUp status name (see config.clickup.example.yaml)
+
+# Required ClickUp Space statuses (validated by `clickup.sh check` and /karimo:doctor)
+required_statuses:
+  - in draft
+  - to do
+  - in progress
+  - awaiting input
+  - in review
+  - blocked
+  - complete

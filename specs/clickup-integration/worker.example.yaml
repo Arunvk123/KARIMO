@@ -1,0 +1,35 @@
+# KARIMO polling worker configuration
+# Installed at: /etc/karimo-worker/worker.yaml (source-only component: worker/)
+# Spec: specs/clickup-integration/SPEC.md (§10)
+#
+# Secrets come from the worker user's environment (systemd EnvironmentFile),
+# never from this file:
+#   CLICKUP_API_TOKEN, ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN, GH_TOKEN
+
+worker:
+  poll_interval_seconds: 60          # systemd timer interval (OnUnitActiveSec)
+  max_concurrent_sessions: 2         # global; plus at most 1 session per PRD
+  lock_ttl_minutes: 240              # stale lock threshold (only if the pid is dead)
+  log_dir: /var/log/karimo-worker
+  log_retention_days: 30
+  claude:
+    binary: claude
+    settings: /etc/karimo-worker/worker-settings.json   # permission allowlist
+    output_format: stream-json
+  on_failure:
+    set_status: blocked              # ClickUp status after a crashed/non-zero session
+    comment: true
+
+# One entry per linked repository on this server
+repos:
+  - name: acme-web
+    path: /home/karimo/repos/acme-web       # clone with KARIMO installed
+    default_branch: main
+    space_id: "90120000001"                  # must match integrations.clickup.space_id
+    enabled: true
+
+  - name: acme-api
+    path: /home/karimo/repos/acme-api
+    default_branch: main
+    space_id: "90120000002"
+    enabled: true

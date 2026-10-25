@@ -1,0 +1,57 @@
+# ClickUp integration section for .karimo/config.yaml
+#
+# Spec: specs/clickup-integration/SPEC.md (§7.1)
+# Goes into .karimo/templates/CONFIG_TEMPLATE.yaml under a new top-level
+# `integrations:` key. Written by /karimo:configure (--clickup).
+#
+# Secrets are NEVER stored here. The API token is read from the environment
+# variable named in `token_env`.
+
+integrations:
+  clickup:
+    enabled: false              # false = opted out; mode is always "direct"
+
+    # Link (written by /karimo:configure)
+    workspace_id: ""            # ClickUp team id
+    space_id: ""                # Linked Space (one Space per repo)
+    space_name: ""
+    karimo_user_id: ""          # The dedicated KARIMO member (assignee for pickup)
+    token_env: CLICKUP_API_TOKEN
+    linked_at: ""               # ISO timestamp
+
+    # Interaction modes (SPEC §6)
+    mode:
+      default: companion        # companion | remote | direct
+      remember_last: true       # last used mode lives in .karimo/local-state.json (gitignored)
+
+    remote:
+      wait_minutes: 10          # in-session wait before save-and-exit
+      poll_interval_seconds: 30
+
+    # KARIMO status → ClickUp Space status name (matched case-insensitively)
+    statuses:
+      draft: "in draft"         # human-only; KARIMO ignores tasks here
+      todo: "to do"             # pickup + "I answered" signal
+      in_progress: "in progress"
+      awaiting_input: "awaiting input"
+      in_review: "in review"
+      blocked: "blocked"
+      complete: "complete"
+
+    # Who gets mentioned on questions (SPEC §6.5)
+    mentions:
+      strategy: owner           # owner = task creator / PRD owner
+      fallback_user_id: ""      # used when no owner resolves
+
+    # Human-created tasks assigned to KARIMO (SPEC §9.3)
+    intake:
+      enabled: true
+      small_task_max_complexity: 4   # <= this → single-task PRD; above → research + plan
+      allowed_creators: []           # ClickUp user ids; empty = any workspace member
+
+    # Outbound sync (SPEC §8)
+    sync:
+      progress_comments: milestones  # all | milestones | none
+      link_prs: true                 # add [CU-{id}] to PR titles
+      create_dependencies: true      # mirror depends_on as ClickUp "waiting on"
+      optional_fields: true          # fill KARIMO ID / Wave / Complexity / PR URL / Model if they exist
