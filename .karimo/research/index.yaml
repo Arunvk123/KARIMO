@@ -33,4 +33,12 @@
 #   - If missing, karimo-research will initialize it with empty array
 #   - Manual editing is safe (YAML format)
 
-research: []
+research:
+  - id: "001"
+    topic: "ClickUp Integration"
+    filename: "clickup-integration-001.md"
+    created: "2026-10-26T00:00:00Z"
+    tags: ["clickup", "integration", "webhooks", "worker", "communication"]
+    summary: "ClickUp API/webhook/agent capabilities and limits (no API-managed statuses, top-level-only comment webhooks, no native external-agent identity); trigger options (polling worker, GitHub Actions, webhook listener); status-driven reply protocol."
+    status: "approved"
+    rounds: 1
