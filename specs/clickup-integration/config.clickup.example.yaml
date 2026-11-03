@@ -16,7 +16,7 @@ integrations:
     space_id: ""                # Linked Space (one Space per repo)
     space_name: ""
     karimo_user_id: ""          # The dedicated KARIMO member (assignee for pickup)
-    space_template_id: ""       # Shared "KARIMO Project" Space template (SPEC §5.1)
+    space_template_id: ""       # Optional Space template; statuses are otherwise added via the connector (SPEC §5.1)
     token_env: CLICKUP_API_TOKEN
     linked_at: ""               # ISO timestamp
 

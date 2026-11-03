@@ -48,7 +48,9 @@ before adding the `clickup` provider.
 - **Space statuses cannot be created/edited via the public API** (community
   reports + open feature requests; `PUT /space/{id}` silently ignores status
   payloads). API-created Spaces get only default statuses.
-  → Status workflow must come from a **Space template** or manual setup.
+  → **Correction (2026-11-04 verification):** the ClickUp connector (OAuth) *can*
+    add/rename/remove Space statuses (`space_status.update_many`, with dry-run).
+    Only REST v2 with a personal token cannot. See SPEC §13, D-22.
 - Space tags *can* be created via API; task tags can be added/removed.
 - Custom field *values* can be set via API; creating field definitions via the
   public API is unconfirmed → treat custom fields as optional.

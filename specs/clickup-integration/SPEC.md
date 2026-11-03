@@ -37,7 +37,8 @@ Related files in this folder:
 
 ### Non-Goals (v1)
 
-- Using the ClickUp MCP server (OAuth-only; not usable headless). REST API only.
+- Using the ClickUp MCP connector at runtime (OAuth-only; not usable headless). Runtime is REST only;
+  the connector is used once, in `/karimo:configure`, to add Space statuses (D-22).
 - Two-way sync of task *content* (title/description edits in ClickUp are not
   pulled back into `tasks.yaml`).
 - ClickUp Chat channel integration.
@@ -51,7 +52,7 @@ Related files in this folder:
 |---|----------|--------|
 | D-1 | One ClickUp **Space per repo**; one **Folder per PRD** | Discussion (A1) |
 | D-2 | Setup offers link existing / create new / opt out | Discussion (B) |
-| D-3 | **REST API only**, wrapped in provider scripts + a skill. No MCP | Discussion (C) |
+| D-3 | **REST API only at runtime**, wrapped in provider scripts + a skill (connector exception: D-22) | Discussion (C) |
 | D-4 | Three interaction modes; last choice remembered; `--mode` overrides per session | Discussion (1) |
 | D-5 | Remote mode asks in ClickUp **and** terminal; first answer wins; waits 10 min then saves and exits | Discussion (1) |
 | D-6 | Direct mode = ClickUp fully off for that session (no sync, no comments) | Assumption confirmed |
@@ -61,7 +62,7 @@ Related files in this folder:
 | D-10 | Questions mention the **task creator**; for KARIMO-generated tasks, the **PRD owner** | Q&A |
 | D-11 | Human-created tasks assigned to KARIMO are **sized automatically**: small → single-task PRD; large → research + plan | Q&A |
 | D-12 | Worker runs on a **Linux server**; polling (D2) first, GitHub Actions (D3) and webhook listener (D1) later | Q&A + discussion |
-| D-13 | Statuses come from a **Space template** (API cannot create statuses); `doctor` validates | Research |
+| D-13 | ~~Statuses come from a Space template~~ — superseded by D-22 | Research |
 | D-14 | Branch names unchanged; ClickUp IDs go in **PR titles** (`[CU-{id}]`) for GitHub linking | Research |
 | D-15 | **ClickUp failures never fail KARIMO execution**; failed calls go to an outbox and are retried | Design principle |
 | D-16 | The remote interview (`/karimo:plan`) follows the active mode; in Remote mode, questions go to the PRD control task | Assumption confirmed |
@@ -69,7 +70,8 @@ Related files in this folder:
 | D-18 | A human moving a KARIMO task to `Complete` before KARIMO finishes is **ignored and restored** (KARIMO/GitHub own completion) | Q&A |
 | D-19 | Progress comments default to **milestones**; every question **always** posts a comment **and** sets `Awaiting Response`, whatever the comment setting | Q&A |
 | D-20 | PR titles reference the ClickUp task by its **Custom Task ID if it has one**, otherwise `CU-{id}` (auto-detect) | Q&A |
-| D-21 | Statuses come from **one shared "KARIMO Project" Space template**, created once by the user | Q&A |
+| D-21 | ~~One shared "KARIMO Project" Space template~~ — superseded by D-22 (template now optional) | Q&A |
+| D-22 | `/karimo:configure` adds missing Space statuses through the **ClickUp connector** (dry-run preview, then apply); template optional; runtime stays REST | Verification + Q&A |
 
 ---
 
@@ -142,14 +144,31 @@ ClickUp dependencies (`waiting on`) are created for `depends_on` edges.
 | `Complete` | closed | KARIMO | PR merged / PRD merged. |
 
 Names are configurable (`integrations.clickup.statuses`) and matched
-case-insensitively. **Because the public API cannot create Space statuses**, they
-must exist through one of:
+case-insensitively.
 
-1. **One shared ClickUp Space template, "KARIMO Project"** (decided, D-21). The user
-   creates it once in the ClickUp UI following `CLICKUP.md`; its id is saved in
-   `integrations.clickup.space_template_id`. "Create a new Space" in configure uses it.
-2. Fallback for an existing Space linked without the template: configure lists the
-   missing statuses and waits while the user adds them.
+**How statuses get into a Space (D-22, verified 2026-11-04):** the REST API v2 with a
+personal token cannot create Space statuses, but the **ClickUp connector (OAuth)**
+can, via `space_status.update_many` (add / rename / remove, with a `dry_run`
+preview). Because `/karimo:configure` runs with the user at the terminal, it:
+
+1. Lists the Space's statuses (REST `GET /space/{id}` or connector `space_status.list`).
+2. Computes the missing ones and shows a **dry-run preview** of the change.
+3. On confirmation, adds them through the connector in one call.
+4. If the connector is not available in the session, prints the missing statuses
+   and waits while the user adds them in the ClickUp UI.
+
+Constraints found in verification:
+
+- A status set has exactly one `open` and one `closed` status (`to do`, `complete`).
+  `In Draft` is therefore a `custom` status placed right after `To Do`; its meaning
+  ("KARIMO ignores it") is unchanged.
+- The call can time out (HTTP 500 "context deadline exceeded" seen once); configure
+  re-lists the statuses and retries once.
+
+A shared "KARIMO Project" Space template stays **optional**
+(`integrations.clickup.space_template_id`): if set, "Create a new Space" uses it and
+no status changes are needed. This is the only use of the connector; everything
+else, including all runtime and worker calls, is REST.
 
 `/karimo:doctor` and `clickup.sh check` verify that all seven exist and list the
 missing ones.
@@ -304,8 +323,8 @@ The brief says avatars come from "the user service", but there are two:
 `src/services/users.ts` and `src/api/legacy/users.ts`.
 
 Question: Which service should the avatar URL come from?
-  1. src/services/users.ts (newer, typed)
-  2. src/api/legacy/users.ts (used by the existing header)
+  1) src/services/users.ts (newer, typed)
+  2) src/api/legacy/users.ts (used by the existing header)
 
 ➡️ Reply in this thread, then move this task to **To Do**.
 — KARIMO · q:Q-2a-001
@@ -313,7 +332,7 @@ Question: Which service should the avatar URL come from?
 
 - The trailing `q:{id}` marker lets the parser match replies to questions.
 - The comment is posted as an **assigned comment** to the mentioned user (shows in their
-  ClickUp inbox) as well as with an @mention. *(Payload format to verify — §13.)*
+  ClickUp inbox) as well as with an @mention. Payload: `assignee: {user_id}` plus a rich-text `comment` array ending in `{type: "tag", user: {id}}` (verified, §13).
 - Answer parsing: every comment and thread reply by a non-KARIMO user posted after the
   question timestamp, concatenated in chronological order, is the answer. A bare number
   matching an option selects that option.
@@ -610,30 +629,53 @@ After link/create:
 
 1. Verify `$CLICKUP_API_TOKEN` is set and belongs to the KARIMO member (`clickup.sh whoami`).
    If it is missing, print setup instructions and save the config with `enabled: false`.
-2. Verify statuses (§5.1); print the missing ones with fix instructions.
+2. Check statuses (§5.1): preview and add the missing ones through the connector; if the
+   connector is unavailable, list them and wait while the user adds them.
 3. Ask for the default mode (Companion recommended).
 4. Ask who receives questions when no owner resolves (fallback user).
 5. Write `integrations.clickup` to `config.yaml`.
 
 ---
 
-## 13. Items to Verify Before or During Phase 1
+## 13. Verification Results (2026-11-04)
 
-| # | Item | Fallback if not possible |
-|---|------|--------------------------|
-| V-1 | Space creation from a template via API | Create a plain Space; user applies statuses manually |
-| V-2 | Comment @mention payload (`comment: [{type: "tag", user: {id}}]`) | Use `assignee` (assigned comment) + `notify_all` |
-| V-3 | Assigned-comment fields on `POST /task/{id}/comment` | @mention only |
-| V-4 | Thread replies endpoint (`GET`/`POST /comment/{id}/reply`) | Post the answer mirror as a top-level comment |
-| V-5 | Custom field value updates for optional fields | Use tags + description only |
-| V-6 | ClickUp GitHub app linking on `[CU-{id}]` in PR titles | Link in a PR body + ClickUp comment |
-| V-7 | Claude Code background shell task notification for the Remote-mode waiter | Short blocking polls in a loop with terminal check-ins |
-| V-8 | Claude auth for headless server use (API key vs. OAuth token terms) | API key |
-| V-9 | How `.karimo/providers/` reaches target repos via `install.sh` | Add an explicit copy step |
+Run against the user's workspace (Team Space) in a temporary folder, with the
+ClickUp connector and REST API v2 (personal token). Plan limit observed:
+`X-RateLimit-Limit: 100` per minute.
 
----
+| # | Item | Result | Consequence for implementation |
+|---|------|--------|-------------------------------|
+| V-1 | Space statuses via API | REST v2: **no**. Connector `space_status.update_many`: **yes** (dry-run verified) | D-22; §5.1 |
+| V-2 | @mention in a comment | REST: **`comment: [{text: "..."}, {type: "tag", user: {id}}]` works**. A markdown link `[@Name](#user_mention#id)` in `comment_text` is **not** converted by REST (connector only) | `clickup.sh` builds the rich-text `comment` array |
+| V-3 | Assigned comment | **Works** (`assignee` on `POST /task/{id}/comment`; read back with `assignee`, `resolved: false`) | Questions are assigned comments **and** mentions |
+| V-4 | Thread replies | `POST /comment/{id}/reply` **works**; `GET /comment/{id}/reply` **works** (not in the docs); parent shows `reply_count` | Answer collection reads threads directly |
+| V-5 | Custom fields | Field creation: connector only. Value update `POST /task/{id}/field/{field_id}`: **works** via REST | Optional fields stay optional; values set via REST when the field exists |
+| V-6 | GitHub linking by `[CU-{id}]` in PR title | **Not linked yet**: draft PR #2 with `[CU-86d4dphxk]` in the title and branch `verify/CU-86d4dphxk` showed no `git_links` and no ClickUp bot comment after ~2 min, with the GitHub app installed. Likely cause: the repo is not linked to the Space in ClickUp's GitHub settings (pending re-test) | Configure step tells the user to link the repo to the Space; `doctor` checks a recent KARIMO PR shows in `git_links`; KARIMO's own PR comment on the task remains the guaranteed link |
+| V-7 | Background waiter wakes the session | **Works**: a background shell task re-invoked the session on completion with no user input | Remote-mode design (§6.3) holds |
+| V-8 | Claude auth on the server | Community reports of 401s with `CLAUDE_CODE_OAUTH_TOKEN` in `claude -p` (one still open) | Worker defaults to `ANTHROPIC_API_KEY`; re-test on the server |
+| V-9 | Providers reaching target repos | **Not installed**: `MANIFEST.json` has no `providers` key and `install.sh`/`update.sh` never copy `.karimo/providers/`, while `agents/pm-reviewer.md:199` reads manifests from there | **Pre-existing bug** for greptile/code-review; fix as Phase 0 (see §14) |
+
+Other findings:
+
+- **Encoding:** on Windows Git Bash, passing a JSON body as a `curl -d` argument mangles
+  non-ASCII characters (❓, —, ·). Sending it on stdin (`--data-binary @-`) or from a
+  file is correct. `lib/api.sh` must always send bodies from stdin/file.
+- **Comments read back as plain text** (`comment_text`), losing markdown list numbering.
+  Option numbers must be written literally in the text (e.g. `1)`), which REST keeps.
+- Tags with colons (`prd:verify`, `wave:1`) are accepted.
+- The pickup query (`GET /team/{id}/task?space_ids[]&assignees[]&statuses[]&tags[]`)
+  returned exactly the expected task.
+- The workspace does not use Custom Task IDs, so PR titles use `[CU-{id}]` (D-20 auto-detect).
+- The workspace currently has one member; the **KARIMO member account must be created**
+  before Phase 1 testing of pickup and loop prevention.
 
 ## 14. Phases and Acceptance Criteria
+
+### Phase 0 — Fix provider installation (patch release)
+
+- [ ] Add a `providers` section to `MANIFEST.json` and copy `.karimo/providers/**` in
+      `install.sh` and `update.sh` (V-9). Verify greptile/code-review manifests exist in a
+      fresh install.
 
 ### Phase 1 — Link and outbound sync (v9.12.0)
 
@@ -689,6 +731,6 @@ Scope: `worker/`, `clickup.sh pickup/claim`, `/karimo:clickup intake`, sizing, l
 | Human moves a KARIMO task to `Complete` early | Ignore and restore (D-18, §5.3) |
 | Default progress comment volume | Milestones; questions always comment + `Awaiting Response` (D-19, §8) |
 | PR title task reference | Auto-detect Custom Task ID, else `CU-{id}` (D-20, §8) |
-| How statuses get into Spaces | One shared "KARIMO Project" Space template (D-21, §5.1) |
+| How statuses get into Spaces | Configure adds them via the ClickUp connector; template optional (D-22, §5.1) |
 
 No open questions remain. Items still to verify against the live API are in §13.
