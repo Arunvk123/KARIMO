@@ -66,6 +66,10 @@ Related files in this folder:
 | D-15 | **ClickUp failures never fail KARIMO execution**; failed calls go to an outbox and are retried | Design principle |
 | D-16 | The remote interview (`/karimo:plan`) follows the active mode; in Remote mode, questions go to the PRD control task | Assumption confirmed |
 | D-17 | Terminal answers are mirrored to ClickUp as a thread reply on the question comment | Assumption confirmed |
+| D-18 | A human moving a KARIMO task to `Complete` before KARIMO finishes is **ignored and restored** (KARIMO/GitHub own completion) | Q&A |
+| D-19 | Progress comments default to **milestones**; every question **always** posts a comment **and** sets `Awaiting Response`, whatever the comment setting | Q&A |
+| D-20 | PR titles reference the ClickUp task by its **Custom Task ID if it has one**, otherwise `CU-{id}` (auto-detect) | Q&A |
+| D-21 | Statuses come from **one shared "KARIMO Project" Space template**, created once by the user | Q&A |
 
 ---
 
@@ -141,8 +145,11 @@ Names are configurable (`integrations.clickup.statuses`) and matched
 case-insensitively. **Because the public API cannot create Space statuses**, they
 must exist through one of:
 
-1. A ClickUp **Space template** "KARIMO Project" (recommended; documented in `CLICKUP.md`).
-2. Manual setup, guided by `/karimo:configure --clickup`.
+1. **One shared ClickUp Space template, "KARIMO Project"** (decided, D-21). The user
+   creates it once in the ClickUp UI following `CLICKUP.md`; its id is saved in
+   `integrations.clickup.space_template_id`. "Create a new Space" in configure uses it.
+2. Fallback for an existing Space linked without the template: configure lists the
+   missing statuses and waits while the user adds them.
 
 `/karimo:doctor` and `clickup.sh check` verify that all seven exist and list the
 missing ones.
@@ -188,6 +195,10 @@ Hard rules:
   Only humans make those transitions. This prevents loops.
 - KARIMO only picks up tasks that are **`To Do` ∧ assigned to the KARIMO member ∧ in the linked Space**.
 - A human moving a KARIMO task back to `To Do` from `Blocked` means "retry".
+- A human moving a KARIMO task to `Complete` before KARIMO has finished it (no merged PR)
+  is **ignored**: on its next sync KARIMO restores the real status and comments
+  "Completion is tracked by KARIMO from the merged PR — status restored to {status}."
+  (`status.json` stays the source of truth.)
 
 ---
 
@@ -378,7 +389,7 @@ and **non-fatal** (on failure → outbox + warning line; execution continues).
 | Tasks generated | `/karimo:run` Phase 1 (after briefs) | Create/update one task per `tasks.yaml` entry, assign the KARIMO member, status `To Do`, tags, dependencies |
 | Execution started | PM start | PRD control task → `In Progress`; comment with wave plan |
 | Task started | PM spawns worker for task | Task → `In Progress` |
-| PR opened | PM after PR creation | Task → `In Review`; comment with PR link; set `PR URL` field; PR title gets `[CU-{id}]` |
+| PR opened | PM after PR creation | Task → `In Review`; comment with PR link; set `PR URL` field; PR title gets the task reference (D-20) |
 | Review result | pm-reviewer | Comment summary (score/findings count, attempt n of max) |
 | Task merged | PM merge detection | Task → `Complete` |
 | Task failed / blocked | PM | Task → `Blocked`; comment with reason + how to retry (move to `To Do`) |
@@ -389,7 +400,15 @@ and **non-fatal** (on failure → outbox + warning line; execution continues).
 | PRD ready for merge | PM finalizer | PRD control task → `In Review` |
 | PRD merged | `/karimo:merge` | PRD control task → `Complete`; final summary comment |
 
-Comment volume is controlled by `sync.progress_comments` (`all` | `milestones` | `none`).
+Comment volume is controlled by `sync.progress_comments` (`all` | `milestones` | `none`,
+default `milestones`). Milestones = PR opened, review result, failure/blocked, wave
+complete, gate, PRD merged. **Questions are never suppressed:** asking always posts the
+question comment **and** moves the task (or PRD control task) to `Awaiting Response`;
+after replying, the human moves it back to `To Do`.
+
+**Task reference in PR titles (D-20):** `[{custom_id}]` when the ClickUp task has a
+Custom Task ID (e.g. `[WEB-123]`), otherwise `[CU-{id}]`. Detected per task from the
+`custom_id` field of `GET /task/{id}`.
 
 ---
 
@@ -663,9 +682,13 @@ Scope: `worker/`, `clickup.sh pickup/claim`, `/karimo:clickup intake`, sizing, l
 
 ---
 
-## 15. Open Questions (non-blocking)
+## 15. Resolved Questions
 
-1. Should a human moving a KARIMO task to `Complete` in ClickUp cancel the KARIMO task? (Default: no; KARIMO
-   comments that the status is ignored and restores it.)
-2. Should progress comments default to `milestones` rather than `all`? (Proposed default: `milestones`.)
-3. Should the PR title tag be `[CU-{id}]` or ClickUp custom task IDs when the workspace uses them?
+| Question | Resolution |
+|----------|------------|
+| Human moves a KARIMO task to `Complete` early | Ignore and restore (D-18, §5.3) |
+| Default progress comment volume | Milestones; questions always comment + `Awaiting Response` (D-19, §8) |
+| PR title task reference | Auto-detect Custom Task ID, else `CU-{id}` (D-20, §8) |
+| How statuses get into Spaces | One shared "KARIMO Project" Space template (D-21, §5.1) |
+
+No open questions remain. Items still to verify against the live API are in §13.

@@ -19,7 +19,7 @@ capabilities:
   dependencies: true             # depends_on → "waiting on"
   clarifications: true           # Ask protocol via comments + Awaiting Response
   intake: true                   # Human-created tasks assigned to KARIMO
-  pr_linking: true               # [CU-{id}] in PR titles
+  pr_linking: true               # [{custom_id}] or [CU-{id}] in PR titles
 
 # Entry point; every hook calls it with a subcommand
 entrypoint: scripts/clickup.sh

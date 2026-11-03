@@ -16,6 +16,7 @@ integrations:
     space_id: ""                # Linked Space (one Space per repo)
     space_name: ""
     karimo_user_id: ""          # The dedicated KARIMO member (assignee for pickup)
+    space_template_id: ""       # Shared "KARIMO Project" Space template (SPEC §5.1)
     token_env: CLICKUP_API_TOKEN
     linked_at: ""               # ISO timestamp
 
@@ -51,7 +52,7 @@ integrations:
 
     # Outbound sync (SPEC §8)
     sync:
-      progress_comments: milestones  # all | milestones | none
-      link_prs: true                 # add [CU-{id}] to PR titles
+      progress_comments: milestones  # all | milestones | none (questions are always posted)
+      link_prs: true                 # add [{custom_id}] or [CU-{id}] to PR titles
       create_dependencies: true      # mirror depends_on as ClickUp "waiting on"
       optional_fields: true          # fill KARIMO ID / Wave / Complexity / PR URL / Model if they exist
