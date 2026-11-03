@@ -650,7 +650,7 @@ ClickUp connector and REST API v2 (personal token). Plan limit observed:
 | V-3 | Assigned comment | **Works** (`assignee` on `POST /task/{id}/comment`; read back with `assignee`, `resolved: false`) | Questions are assigned comments **and** mentions |
 | V-4 | Thread replies | `POST /comment/{id}/reply` **works**; `GET /comment/{id}/reply` **works** (not in the docs); parent shows `reply_count` | Answer collection reads threads directly |
 | V-5 | Custom fields | Field creation: connector only. Value update `POST /task/{id}/field/{field_id}`: **works** via REST | Optional fields stay optional; values set via REST when the field exists |
-| V-6 | GitHub linking by `[CU-{id}]` in PR title | **Not linked yet**: draft PR #2 with `[CU-86d4dphxk]` in the title and branch `verify/CU-86d4dphxk` showed no `git_links` and no ClickUp bot comment after ~2 min, with the GitHub app installed. Likely cause: the repo is not linked to the Space in ClickUp's GitHub settings (pending re-test) | Configure step tells the user to link the repo to the Space; `doctor` checks a recent KARIMO PR shows in `git_links`; KARIMO's own PR comment on the task remains the guaranteed link |
+| V-6 | GitHub linking by `[CU-{id}]` | **Works once the repo is linked to the task's Space** in ClickUp's GitHub settings. The first attempt failed because the repo was linked to Karimo-Coder while the task was in Team Space. With the task in Karimo-Coder, draft PR #2 appeared in the task's `git_links` (url, number, title, state, draft, branches) within about a minute of retitling + pushing | Configure checks the repo is linked to **the same Space** KARIMO is linked to; `doctor` checks a recent KARIMO PR appears in `git_links`. `git_links` can also be read to confirm PR state from ClickUp |
 | V-7 | Background waiter wakes the session | **Works**: a background shell task re-invoked the session on completion with no user input | Remote-mode design (§6.3) holds |
 | V-8 | Claude auth on the server | Community reports of 401s with `CLAUDE_CODE_OAUTH_TOKEN` in `claude -p` (one still open) | Worker defaults to `ANTHROPIC_API_KEY`; re-test on the server |
 | V-9 | Providers reaching target repos | **Not installed**: `MANIFEST.json` has no `providers` key and `install.sh`/`update.sh` never copy `.karimo/providers/`, while `agents/pm-reviewer.md:199` reads manifests from there | **Pre-existing bug** for greptile/code-review; fix as Phase 0 (see §14) |
@@ -663,6 +663,14 @@ Other findings:
 - **Comments read back as plain text** (`comment_text`), losing markdown list numbering.
   Option numbers must be written literally in the text (e.g. `1)`), which REST keeps.
 - Tags with colons (`prd:verify`, `wave:1`) are accepted.
+- **Status types vary between Spaces:** in Karimo-Coder, `complete` is a `done`-type status and
+  `cancelled` is the `closed` one. KARIMO matches by **name** and accepts `done` or `closed` for
+  `Complete`. The connector cannot create `done`-type statuses, so an existing `complete` is
+  reused. Extra statuses already in a Space (e.g. `planning`, `at risk`, `on hold`) are left
+  alone and ignored by KARIMO.
+- **This repo's Space:** Karimo-Coder (`90168886366`), already linked to `Arunvk123/KARIMO`
+  on GitHub. Missing KARIMO statuses there: `in draft`, `awaiting response`, `in review`, `blocked`.
+- Test objects (folder, tasks, field, PR #2 and its branch) were removed after verification.
 - The pickup query (`GET /team/{id}/task?space_ids[]&assignees[]&statuses[]&tags[]`)
   returned exactly the expected task.
 - The workspace does not use Custom Task IDs, so PR titles use `[CU-{id}]` (D-20 auto-detect).
