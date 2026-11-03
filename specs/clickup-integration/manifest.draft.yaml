@@ -17,7 +17,7 @@ capabilities:
   task_mirroring: true           # One ClickUp task per KARIMO task
   status_sync: true
   dependencies: true             # depends_on → "waiting on"
-  clarifications: true           # Ask protocol via comments + Awaiting Input
+  clarifications: true           # Ask protocol via comments + Awaiting Response
   intake: true                   # Human-created tasks assigned to KARIMO
   pr_linking: true               # [CU-{id}] in PR titles
 
@@ -58,7 +58,7 @@ required_statuses:
   - in draft
   - to do
   - in progress
-  - awaiting input
+  - awaiting response
   - in review
   - blocked
   - complete

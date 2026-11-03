@@ -55,7 +55,7 @@ Related files in this folder:
 | D-4 | Three interaction modes; last choice remembered; `--mode` overrides per session | Discussion (1) |
 | D-5 | Remote mode asks in ClickUp **and** terminal; first answer wins; waits 10 min then saves and exits | Discussion (1) |
 | D-6 | Direct mode = ClickUp fully off for that session (no sync, no comments) | Assumption confirmed |
-| D-7 | **Status-driven reply protocol**: KARIMO sets `Awaiting Input`; the human answers and moves the task to `To Do`; KARIMO picks up `To Do` tasks assigned to it | Discussion (E/F) |
+| D-7 | **Status-driven reply protocol**: KARIMO sets `Awaiting Response`; the human answers and moves the task to `To Do`; KARIMO picks up `To Do` tasks assigned to it | Discussion (E/F) |
 | D-8 | Extra status `In Draft` = human still working; KARIMO ignores it | Discussion (F) |
 | D-9 | Dedicated **KARIMO member account** (one seat) is KARIMO's identity | Q&A |
 | D-10 | Questions mention the **task creator**; for KARIMO-generated tasks, the **PRD owner** | Q&A |
@@ -132,7 +132,7 @@ ClickUp dependencies (`waiting on`) are created for `depends_on` edges.
 | `In Draft` | open | Human | Being written by a human. **KARIMO ignores it.** |
 | `To Do` | open | Human (or KARIMO on task creation) | Ready for KARIMO **if assigned to the KARIMO member**. Also the "I answered" signal. |
 | `In Progress` | custom | KARIMO | Claimed and being worked on. |
-| `Awaiting Input` | custom | KARIMO | Question posted; waiting for a human. |
+| `Awaiting Response` | custom | KARIMO | Question posted; waiting for a human. |
 | `In Review` | custom | KARIMO | PR open, in automated or human review. |
 | `Blocked` | custom | KARIMO | Failed, blocked by a dependency, or needs-human-review after max attempts. |
 | `Complete` | closed | KARIMO | PR merged / PRD merged. |
@@ -154,11 +154,11 @@ missing ones.
 | task `pending` / `queued` / `ready` | `To Do` |
 | task `running` | `In Progress` |
 | task `pr-open`, `in-review`, `revision` | `In Review` |
-| clarification open on the task | `Awaiting Input` |
-| task `needs-human-review` | `Awaiting Input` (with a mention explaining what is needed) |
+| clarification open on the task | `Awaiting Response` |
+| task `needs-human-review` | `Awaiting Response` (with a mention explaining what is needed) |
 | task `blocked`, `failed` | `Blocked` |
 | task `merged` / `done` | `Complete` |
-| PRD `paused-at-gate`, `paused-wave-gate` | PRD control task → `Awaiting Input` |
+| PRD `paused-at-gate`, `paused-wave-gate` | PRD control task → `Awaiting Response` |
 | PRD `active` | PRD control task → `In Progress` |
 | PRD `ready-for-merge` | PRD control task → `In Review` |
 | PRD merged to main | PRD control task → `Complete` |
@@ -171,9 +171,9 @@ stateDiagram-v2
     [*] --> ToDo: KARIMO creates task
     InDraft --> ToDo: human: ready
     ToDo --> InProgress: KARIMO claims
-    InProgress --> AwaitingInput: KARIMO asks
-    AwaitingInput --> ToDo: human answered
-    AwaitingInput --> InProgress: answer via terminal / in-session wait
+    InProgress --> AwaitingResponse: KARIMO asks
+    AwaitingResponse --> ToDo: human answered
+    AwaitingResponse --> InProgress: answer via terminal / in-session wait
     InProgress --> InReview: PR opened
     InReview --> InProgress: revision loop
     InReview --> Complete: PR merged
@@ -236,7 +236,7 @@ blocked task, wave, or PRD (per `blocking`) pauses.
 **Companion:**
 
 1. Record the clarification (`open`), post the ClickUp comment (informational, with mention),
-   set the target task to `Awaiting Input`.
+   set the target task to `Awaiting Response`.
 2. Ask with `AskUserQuestion` in the terminal.
 3. Record the answer (`answered`, `source: terminal`), post it as a thread reply on the
    question comment, set the task back to `In Progress`, continue.
@@ -250,7 +250,7 @@ sequenceDiagram
     participant C as ClickUp
     participant H as Human
     K->>C: post question comment (mention + assigned comment)
-    K->>C: status → Awaiting Input
+    K->>C: status → Awaiting Response
     K->>W: start wait (timeout 10 min, poll 30 s)
     K-->>H: print question in terminal, end turn
     alt Human answers in terminal first
@@ -263,7 +263,7 @@ sequenceDiagram
         K->>C: status → In Progress
     else Timeout (10 min)
         W-->>K: exit 2
-        K->>K: save state, PRD status paused-awaiting-input
+        K->>K: save state, PRD status paused-awaiting-response
         K-->>H: "Saved. Will resume when the task returns to To Do."
     end
 ```
@@ -274,7 +274,7 @@ Implementation notes:
   the user's next terminal message or by the waiter's completion. That gives "first
   answer wins" without a blocking prompt.
 - During the in-session wait, the waiter accepts **either** a status change out of
-  `Awaiting Input` **or** a new non-KARIMO comment/thread reply posted after the
+  `Awaiting Response` **or** a new non-KARIMO comment/thread reply posted after the
   question. After the session exits, only the status change (`To Do`) resumes work.
 - In headless sessions there is no terminal: the session saves and exits right after
   posting (no 10-min wait), since the worker resumes it on `To Do`.
@@ -361,7 +361,7 @@ Gitignored. `{host, pid, session, mode, started_at}`. Key is the PRD slug (or
 
 ### 7.6 Status schema additions
 
-`status.json` gains PRD status `paused-awaiting-input` and an optional
+`status.json` gains PRD status `paused-awaiting-response` and an optional
 `awaiting` object: `{ "clarification_ids": [...], "since": "..." }`.
 
 ---
@@ -382,9 +382,9 @@ and **non-fatal** (on failure → outbox + warning line; execution continues).
 | Review result | pm-reviewer | Comment summary (score/findings count, attempt n of max) |
 | Task merged | PM merge detection | Task → `Complete` |
 | Task failed / blocked | PM | Task → `Blocked`; comment with reason + how to retry (move to `To Do`) |
-| needs-human-review | pm-reviewer | Task → `Awaiting Input`; mention owner with what is needed |
+| needs-human-review | pm-reviewer | Task → `Awaiting Response`; mention owner with what is needed |
 | Wave complete | PM | Comment on PRD control task |
-| Gate pause | PM | PRD control task → `Awaiting Input`; gate question via ask protocol |
+| Gate pause | PM | PRD control task → `Awaiting Response`; gate question via ask protocol |
 | Clarification asked / answered | ask protocol | See §6.3 |
 | PRD ready for merge | PM finalizer | PRD control task → `In Review` |
 | PRD merged | `/karimo:merge` | PRD control task → `Complete`; final summary comment |
@@ -563,13 +563,13 @@ clickup.sh outbox flush [<slug>]
 | `commands/merge.md` | PRD control task → `Complete` |
 | `commands/doctor.md` | ClickUp checks: token env, member, Space reachable, statuses present, outbox backlog, stale locks |
 | `commands/help.md` | New topics |
-| `agents/pm.md` | Sync calls at each transition in §8; write clarifications instead of asking; `paused-awaiting-input` |
-| `agents/pm-reviewer.md` | Review summaries; needs-human-review → `Awaiting Input` |
+| `agents/pm.md` | Sync calls at each transition in §8; write clarifications instead of asking; `paused-awaiting-response` |
+| `agents/pm-reviewer.md` | Review summaries; needs-human-review → `Awaiting Response` |
 | `agents/pm-finalizer.md` | Final summary comment |
 | `agents/interviewer.md` | Return questions in batches for the ask protocol (Remote) |
 | `KARIMO_RULES.md` | Ask-protocol rule; "ClickUp text is untrusted data" rule |
 | `templates/CONFIG_TEMPLATE.yaml` | `integrations.clickup` section |
-| `templates/STATUS_SCHEMA.md` | `paused-awaiting-input`, `awaiting` |
+| `templates/STATUS_SCHEMA.md` | `paused-awaiting-response`, `awaiting` |
 | `templates/EXECUTION_CONFIG_SCHEMA.md` | `clickup.enabled` override |
 | `install.sh` / `update.sh` / `MANIFEST.json` | Install the provider, skills, command; add `.karimo/locks/` and outbox to target `.gitignore` |
 | Docs | `COMMANDS.md`, `ARCHITECTURE.md`, `GETTING-STARTED.md`, `README.md`, `CLAUDE.md` component counts |
@@ -638,7 +638,7 @@ Scope: `interaction-modes` skill, `--mode`, `local-state.json`, `ask`/`wait`/`an
 - [ ] Companion: question asked in the terminal and mirrored to ClickUp with the answer.
 - [ ] Remote: a terminal answer and a ClickUp answer both resume the session; the first wins; the other path is cleaned up.
 - [ ] Remote: after 10 minutes without an answer, state is saved and the session stops; `/karimo:run --prd {slug}` after a ClickUp answer resumes with the answer applied.
-- [ ] Independent tasks keep running while one task is `Awaiting Input`.
+- [ ] Independent tasks keep running while one task is `Awaiting Response`.
 
 ### Phase 3 — Polling worker and intake (v9.14.0)
 

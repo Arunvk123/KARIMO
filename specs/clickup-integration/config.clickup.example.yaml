@@ -33,7 +33,7 @@ integrations:
       draft: "in draft"         # human-only; KARIMO ignores tasks here
       todo: "to do"             # pickup + "I answered" signal
       in_progress: "in progress"
-      awaiting_input: "awaiting input"
+      awaiting_response: "awaiting response"
       in_review: "in review"
       blocked: "blocked"
       complete: "complete"

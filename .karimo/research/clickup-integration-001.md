@@ -107,7 +107,7 @@ before adding the `clickup` provider.
 
 ## 5. Key Insight: Status-Driven Reply Protocol
 
-Using **task status** (Awaiting Input → To Do) as the "human answered" signal
+Using **task status** (Awaiting Response → To Do) as the "human answered" signal
 removes the dependency on comment webhooks entirely. On the signal, KARIMO reads
 all comments (top-level + thread replies via API) posted after the question.
 This sidesteps the threaded-reply webhook gap and keeps the worker's polling to a
